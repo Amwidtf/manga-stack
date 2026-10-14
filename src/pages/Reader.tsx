@@ -28,11 +28,16 @@ export default function ReaderPage() {
   const [pages, setPages] = useState<string[]>([])
   const [feed, setFeed] = useState<NChapter[]>([])
   const [ui, setUi] = useState(true)
+  // 章末「下一章」浮层：仅在末页继续向后翻（点按/滑动）时出现，任意点击收起
+  const [endPrompt, setEndPrompt] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const recorded = useRef(false)
+  // 弹层出现时刻:触发它的那次点按的 click 会在弹层渲染后落到背景层上,
+  // 时间窗内的点击不视为关闭指令(幽灵点击防护)
+  const endPromptAt = useRef(0)
 
   // 上一章/下一章切换时组件不重挂载，渲染期间同步重置，避免旧章节页面闪现
   const [prevCkey, setPrevCkey] = useState(ckey)
@@ -47,6 +52,7 @@ export default function ReaderPage() {
     setError('')
     setPages([])
     setPageState({ epoch: pageEpoch.current, page: 0 })
+    setEndPrompt(false)
   }
   const epoch = pageEpoch.current
   const page = pageState.epoch === epoch ? pageState.page : 0
@@ -150,6 +156,15 @@ export default function ReaderPage() {
         if (pages.length === 0) return p
         const n = Math.min(Math.max(p + delta, 0), pages.length - 1)
         if (chapter && mangaKey) markRead(mangaKey, chapter, n)
+        // 已在末页仍向后翻（点按/滑动）→ 浮出「下一章」提示；向前翻回则收起。
+        // 副作用幂等，StrictMode 双调用安全
+        if (pages.length && p === pages.length - 1) {
+          if (delta > 0) {
+            endPromptAt.current = Date.now()
+            setEndPrompt(true)
+            setUi(false)
+          } else if (delta < 0) setEndPrompt(false)
+        }
         return n
       })
     },
@@ -270,7 +285,6 @@ export default function ReaderPage() {
   // 出错或源被移除时 chrome 常显，保证返回出口始终可见
   const uiVisible = ui || !!error || sourceMissing
   const progress = pages.length ? (page + 1) / pages.length : 0
-  const atEnd = page >= pages.length - 1 && pages.length > 0
   const cLabel = chapter ? chapterLabel(chapter) : ''
 
   return (
@@ -392,26 +406,42 @@ export default function ReaderPage() {
               draggable={false}
             />
           </Zoomable>
-          {atEnd && (
-            <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/85 to-transparent px-6 pb-10 pt-16">
-              <p className="text-sm text-muted-foreground">本章完 · 共 {pages.length} 页</p>
-              {nextChapter ? (
-                <Link
-                  replace
-                  to={`/read/${mangaKey}/${nextChapter.key}`}
-                  className="rounded-full bg-primary px-8 py-3 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/25"
-                >
-                  下一章
-                </Link>
-              ) : (
-                <Link
-                  to={mangaKey ? `/manga/${mangaKey}` : '/'}
-                  className="rounded-full bg-secondary px-8 py-3 text-[15px] font-semibold"
-                >
-                  已是最新，返回详情
-                </Link>
-              )}
-            </div>
+          {/* 章末浮层：仅在末页仍向后翻（点按/滑动）时出现，任意点击收起。
+              到达末页本身不打扰——最后一页保持完整可见 */}
+          {endPrompt && (
+            <>
+              <div
+                className="absolute inset-0 z-20"
+                onClick={() => {
+                  if (Date.now() - endPromptAt.current > 400) setEndPrompt(false)
+                }}
+                onTouchEnd={(e) => e.stopPropagation()}
+              />
+              <div
+                className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/85 to-transparent px-6 pt-16"
+                style={{ paddingBottom: 'calc(2.5rem + max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)))' }}
+                onTouchEnd={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="text-sm text-muted-foreground">本章完 · 共 {pages.length} 页</p>
+                {nextChapter ? (
+                  <Link
+                    replace
+                    to={`/read/${mangaKey}/${nextChapter.key}`}
+                    className="rounded-full bg-primary px-8 py-3 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/25"
+                  >
+                    下一章
+                  </Link>
+                ) : (
+                  <Link
+                    to={mangaKey ? `/manga/${mangaKey}` : '/'}
+                    className="rounded-full bg-secondary px-8 py-3 text-[15px] font-semibold"
+                  >
+                    已是最新，返回详情
+                  </Link>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -461,16 +491,7 @@ export default function ReaderPage() {
         )}
       </footer>
 
-      {/* page indicator (paged, ui hidden)：bottom 用 calc 抬高手势条高度，
-          绝对定位不受容器 safe-b padding 影响 */}
-      {mode === 'paged' && !loading && !error && !uiVisible && (
-        <div
-          className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-full bg-foreground/10 px-3 py-1 font-display text-xs font-semibold tabular-nums backdrop-blur"
-          style={{ bottom: 'calc(1rem + max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)))' }}
-        >
-          {page + 1} / {pages.length}
-        </div>
-      )}
+      {/* 页码指示已移除：沉浸阅读时悬浮胶囊遮挡画面，页码信息由底部工具栏提供 */}
 
       {/* chapter toc:列表来自已加载的 feed(getChapters),无需额外源请求 */}
       <Sheet open={tocOpen} onOpenChange={setTocOpen}>
