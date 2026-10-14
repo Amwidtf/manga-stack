@@ -274,7 +274,9 @@ export default function ReaderPage() {
   const cLabel = chapter ? chapterLabel(chapter) : ''
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div className="safe-t safe-b fixed inset-0 z-50 flex flex-col bg-background">
+      {/* 容器带安全区内边距：图片等流式内容从状态栏下方开始；
+          工具栏/进度条是绝对定位，不受容器 padding 影响，各自用 safe-t 避让 */}
       {/* top progress hairline：外层 safe-t 让进度条避开状态栏，3px 本体不与安全区
           padding 冲突 */}
       <div className="safe-t absolute inset-x-0 top-0 z-30">

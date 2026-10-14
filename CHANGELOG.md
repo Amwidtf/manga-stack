@@ -6,7 +6,7 @@
 
 ### 修复
 
-- Android 15（targetSdk 35）强制 edge-to-edge 后，页面顶部被状态栏遮挡——原生侧把系统栏真实 insets 注入为 CSS 变量（`--safe-top` 等），Web 侧安全区一律取 `max(env(...), var(...))`；移动端顶部标题栏与阅读器工具栏改为 min-height，不再被安全区内边距挤压
+- Android 15（targetSdk 35）强制 edge-to-edge 后，页面顶部被状态栏遮挡——原生侧把系统栏真实 insets 注入为 CSS 变量（`--safe-top` 等），Web 侧安全区一律取 `max(env(...), var(...))`；移动端顶部标题栏与阅读器工具栏改为 min-height，不再被安全区内边距挤压；阅读器全屏容器同样带安全区内边距，漫画画面从状态栏下方开始
 - 软键盘弹出时不再遮挡底部内容（含隐藏控制台的输入行）——viewport 增加 `interactive-widget=resizes-content`
 - 底部抽屉（Sheet）避开手势条；顶部通知避开状态栏；设置页「清除全部应用数据」按钮长文字允许换行不再溢出
 

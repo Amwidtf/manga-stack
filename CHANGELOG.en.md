@@ -6,7 +6,7 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ### Fixed
 
-- On Android 15 (targetSdk 35) edge-to-edge enforcement the page top sat under the status bar — the native side now injects real system-bar insets as CSS variables (`--safe-top` etc.) and every safe area uses `max(env(...), var(...))`; the mobile top bar and reader toolbars switched to min-height so insets padding no longer squeezes them
+- On Android 15 (targetSdk 35) edge-to-edge enforcement the page top sat under the status bar — the native side now injects real system-bar insets as CSS variables (`--safe-top` etc.) and every safe area uses `max(env(...), var(...))`; the mobile top bar and reader toolbars switched to min-height so insets padding no longer squeezes them; the reader's full-screen container also carries the insets, so manga pages start below the status bar
 - The soft keyboard no longer covers bottom content (including the hidden console input row) — viewport meta gains `interactive-widget=resizes-content`
 - Bottom sheets clear the gesture bar, top toasts clear the status bar, and the long factory-reset button label in Settings wraps instead of overflowing
 
