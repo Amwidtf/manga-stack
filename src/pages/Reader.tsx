@@ -461,9 +461,13 @@ export default function ReaderPage() {
         )}
       </footer>
 
-      {/* page indicator (paged, ui hidden) */}
+      {/* page indicator (paged, ui hidden)：bottom 用 calc 抬高手势条高度，
+          绝对定位不受容器 safe-b padding 影响 */}
       {mode === 'paged' && !loading && !error && !uiVisible && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-foreground/10 px-3 py-1 font-display text-xs font-semibold tabular-nums backdrop-blur">
+        <div
+          className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-full bg-foreground/10 px-3 py-1 font-display text-xs font-semibold tabular-nums backdrop-blur"
+          style={{ bottom: 'calc(1rem + max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)))' }}
+        >
           {page + 1} / {pages.length}
         </div>
       )}
