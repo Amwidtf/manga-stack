@@ -4,6 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.0.1-alpha.2] - 2026-10-14 (versionCode 13)
+
+### Fixed
+
+- Safe-area compensation had a unit error: the native side injected physical pixels while the CSS variables are consumed as density-scaled CSS pixels, amplifying the compensation by the screen scale (about 2.75-3x on high-density displays) — the bottom navigation and reader cleared several times the required space above system bars (roughly 150px of dead space on Mate60RS-class devices). Values are now divided by the display density before injection
+
 ## [0.0.1-alpha.1] - 2026-10-14 (versionCode 12)
 
 ### Fixed

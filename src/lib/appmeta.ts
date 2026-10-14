@@ -1,7 +1,7 @@
 // App version metadata — keep in sync with android/app/build.gradle
 // 版本号双处同步：android/app/build.gradle 的 versionCode/versionName 与本文件一起改
-export const APP_VERSION = '0.0.1-alpha.1'
-export const APP_BUILD = 12
+export const APP_VERSION = '0.0.1-alpha.2'
+export const APP_BUILD = 13
 
 // 内置更新检查使用的 GitHub releases 地址（latest 接口只返回正式版；
 // 列表接口供尝鲜频道使用、含预发布；仓库尚无 release 时静默失败）
