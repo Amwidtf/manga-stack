@@ -83,10 +83,15 @@ public class MainActivity extends BridgeActivity {
         Display display = getWindowManager().getDefaultDisplay();
         display.getRealMetrics(dm);
 
-        safeTop = Math.max(0, rawBars[0] - loc[1]);
-        safeLeft = Math.max(0, rawBars[3] - loc[0]);
-        safeRight = Math.max(0, rawBars[1] - (dm.widthPixels - (loc[0] + webView.getWidth())));
-        safeBottom = Math.max(0, rawBars[2] - (dm.heightPixels - (loc[1] + webView.getHeight())));
+        // 几何重叠算出的是物理像素，而 CSS 变量以 CSS 像素为单位——必须除以
+        // density 换算，否则在高密度屏（如 480dpi、缩放 3x）上补偿会被放大数倍，
+        // 底部导航/阅读器出现大片悬空
+        float scale = getResources().getDisplayMetrics().density;
+
+        safeTop = Math.round(Math.max(0, rawBars[0] - loc[1]) / scale);
+        safeLeft = Math.round(Math.max(0, rawBars[3] - loc[0]) / scale);
+        safeRight = Math.round(Math.max(0, rawBars[1] - (dm.widthPixels - (loc[0] + webView.getWidth()))) / scale);
+        safeBottom = Math.round(Math.max(0, rawBars[2] - (dm.heightPixels - (loc[1] + webView.getHeight()))) / scale);
 
         String js = String.format(
                 "window.__setSafeInsets && window.__setSafeInsets(%d,%d,%d,%d);",
