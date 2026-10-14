@@ -99,7 +99,7 @@ export default function AppShell() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="glass safe-t sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/50 px-4 lg:hidden">
+      <header className="glass safe-t sticky top-0 z-40 flex min-h-14 items-center justify-between border-b border-border/50 px-4 lg:hidden">
         <Logo />
         <ThemeToggle />
       </header>
@@ -112,7 +112,7 @@ export default function AppShell() {
       {/* Mobile bottom tab bar */}
       <nav
         className={cn('glass fixed inset-x-0 bottom-0 z-40 grid border-t border-border/50 lg:hidden', navItems.length === 4 ? 'grid-cols-4' : 'grid-cols-3')}
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
+        style={{ paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)) + 20px)' }}
       >
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink

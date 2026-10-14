@@ -258,7 +258,7 @@ export function HiddenConsole({ open, onClose }: { open: boolean; onClose: () =>
     >
       <div
         className="flex max-h-[78vh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-emerald-500/30 bg-[#0a0f0a] shadow-2xl shadow-emerald-500/10 sm:rounded-2xl"
-        style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+        style={{ marginBottom: 'max(env(safe-area-inset-bottom), var(--safe-bottom, 0px))' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-emerald-500/20 px-4 py-3">

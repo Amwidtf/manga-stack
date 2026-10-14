@@ -275,15 +275,18 @@ export default function ReaderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      {/* top progress hairline */}
-      <div className="absolute inset-x-0 top-0 z-30 h-[3px] bg-foreground/5">
-        <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${progress * 100}%` }} />
+      {/* top progress hairline：外层 safe-t 让进度条避开状态栏，3px 本体不与安全区
+          padding 冲突 */}
+      <div className="safe-t absolute inset-x-0 top-0 z-30">
+        <div className="h-[3px] bg-foreground/5">
+          <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${progress * 100}%` }} />
+        </div>
       </div>
 
       {/* top bar */}
       <header
         className={cn(
-          'glass safe-t absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 border-b border-border/40 px-2 transition-transform duration-300',
+          'glass safe-t absolute inset-x-0 top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border/40 px-2 transition-transform duration-300',
           !uiVisible && '-translate-y-full'
         )}
       >
@@ -417,7 +420,7 @@ export default function ReaderPage() {
           'glass absolute inset-x-0 bottom-0 z-20 border-t border-border/40 px-3 pt-2 transition-transform duration-300',
           !uiVisible && 'translate-y-full'
         )}
-        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(0.5rem + max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)))' }}
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1">
           <ChapterBtn mangaKey={mangaKey} chapter={prevChapter} label="上一章" icon={<ChevronLeft className="h-5 w-5" />} disabled={!prevChapter} />

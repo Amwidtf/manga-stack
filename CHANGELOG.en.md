@@ -4,6 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- On Android 15 (targetSdk 35) edge-to-edge enforcement the page top sat under the status bar — the native side now injects real system-bar insets as CSS variables (`--safe-top` etc.) and every safe area uses `max(env(...), var(...))`; the mobile top bar and reader toolbars switched to min-height so insets padding no longer squeezes them
+- The soft keyboard no longer covers bottom content (including the hidden console input row) — viewport meta gains `interactive-widget=resizes-content`
+- Bottom sheets clear the gesture bar, top toasts clear the status bar, and the long factory-reset button label in Settings wraps instead of overflowing
+
 ## [0.0.1-alpha] - 2026-10-13 (versionCode 11)
 
 First internal prerelease. From this point the project uses SemVer prerelease numbers (`0.0.x-alpha`) for internal builds until it is ready for a public `0.1.0`; earlier `1.x` entries below are historical version names from the pre-open-source era, kept for the record. This build combines the open-source repo setup, the config-driven source system and the multi-source / updater / download-manager merge.

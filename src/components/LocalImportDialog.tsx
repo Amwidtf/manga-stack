@@ -75,7 +75,7 @@ export function LocalImportDialog({
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+      style={{ paddingBottom: 'calc(1.5rem + max(env(safe-area-inset-bottom), var(--safe-bottom, 0px)))' }}
       role="dialog"
       aria-modal="true"
     >

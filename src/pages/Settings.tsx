@@ -217,8 +217,8 @@ export default function SettingsPage() {
             onClick={() => setConfirm('wipe')}
             className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
-            <Trash2 className="h-4 w-4" />
-            清除全部应用数据（恢复初始状态）
+            <Trash2 className="h-4 w-4 shrink-0" />
+            <span className="text-left">清除全部应用数据（恢复初始状态）</span>
           </button>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground/70">
