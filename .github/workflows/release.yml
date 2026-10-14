@@ -1,0 +1,107 @@
+name: Release APK
+
+# 发布流程详见 docs/RELEASE.md（单一来源）。速览：
+#   1. npm test && npm run lint && npm run build 本地全绿
+#   2. node scripts/bump-version.mjs pre   # 预发布计数 +1（或显式指定版本号）
+#   3. CHANGELOG.md 增加对应版本双语段落（Release 说明自动取自该段落）
+#   4. git commit -am "release: vX.Y.Z" && git tag vX.Y.Z && git push --tags
+# 需要的 Secrets：
+#   MANGASTACK_KEYSTORE_BASE64  base64 编码的签名 keystore
+#   MANGASTACK_STORE_PASSWORD   keystore 密码
+#   MANGASTACK_KEY_ALIAS        密钥别名
+#   MANGASTACK_KEY_PASSWORD     密钥密码
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # ubuntu-latest 自带 Android SDK（ci.yml 的 assembleDebug 作业未装额外
+      # SDK action 也能构建），无需 setup-android；该 action 在 2026-10 起已
+      # 无法运行，曾导致发版工作流在 SDK 准备一步直接失败。
+
+      # 签名方案与本地一致：还原 keystore 到 keystore/，并把密码写成
+      # android/key.properties（gitignored），build.gradle 原样读取
+      - name: Restore signing keystore
+        run: |
+          mkdir -p keystore
+          echo "${{ secrets.MANGASTACK_KEYSTORE_BASE64 }}" | base64 -d > keystore/mangastack.keystore
+          {
+            echo "storePassword=${{ secrets.MANGASTACK_STORE_PASSWORD }}"
+            echo "keyAlias=${{ secrets.MANGASTACK_KEY_ALIAS }}"
+            echo "keyPassword=${{ secrets.MANGASTACK_KEY_PASSWORD }}"
+          } > android/key.properties
+
+      - name: Build web assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Assemble release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Rename artifact
+        run: cp android/app/build/outputs/apk/release/app-release.apk "MangaStack-${{ github.ref_name }}.apk"
+
+      # 守卫：secrets 缺失时 gradle 会静默回退 debug 签名，用户将无法覆盖升级，必须拦下
+      - name: Verify APK is not debug-signed
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)
+          if "$APKSIGNER" verify --print-certs "MangaStack-${{ github.ref_name }}.apk" | grep -q "CN=Android Debug"; then
+            echo "::error::APK 使用 debug 证书签名（secrets 缺失导致 gradle 回退），禁止发布"
+            exit 1
+          fi
+          echo "release signature OK"
+
+      # Release 说明取自 CHANGELOG.md（中文为主）对应版本段落，末尾附英文版链接
+      - name: Extract release notes from CHANGELOG
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VER="${TAG#v}"
+          awk -v tag="[${VER}]" '
+            index($0, "## " tag) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "::error::CHANGELOG.md 中没有找到 ${TAG} 对应的段落"
+            exit 1
+          fi
+          printf '\n---\n\n'
+          echo "English release notes: [CHANGELOG.en.md](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.en.md)" >> release_notes.md
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MangaStack-${{ github.ref_name }}.apk
+          body_path: release_notes.md
+          # 预发布标签标记为 pre-release，保证 releases/latest（稳定更新频道）只指向正式版；
+          # 该标记与应用内尝鲜频道必须同批上线，否则单频道用户会查不到任何版本
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}

@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 9% 97.5%;
+    --foreground: 240 6% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 6%;
+    --primary: 4 92% 54%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 6% 93%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 40 6% 93%;
+    --muted-foreground: 240 4% 42%;
+    --accent: 40 6% 93%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 4 92% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 6% 89%;
+    --input: 40 6% 89%;
+    --ring: 4 92% 54%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 240 4% 4.3%;
+    --foreground: 45 10% 96%;
+    --card: 240 4% 7.5%;
+    --card-foreground: 45 10% 96%;
+    --popover: 240 4% 8%;
+    --popover-foreground: 45 10% 96%;
+    --primary: 4 92% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 13%;
+    --secondary-foreground: 45 10% 96%;
+    --muted: 240 4% 13%;
+    --muted-foreground: 240 4% 62%;
+    --accent: 240 4% 14%;
+    --accent-foreground: 45 10% 96%;
+    --destructive: 4 92% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 4% 14.5%;
+    --input: 240 4% 16%;
+    --ring: 4 92% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    /* app-like: no double-tap zoom / 300ms delay; page-level pinch zoom is
+       disabled via the viewport meta, manga images zoom via the reader */
+    touch-action: manipulation;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+    overscroll-behavior-y: none;
+  }
+  .font-display {
+    font-family: "Bricolage Grotesque", -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    font-feature-settings: "ss01" on, "cv11" on;
+  }
+}
+
+@layer utilities {
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-t {
+    padding-top: env(safe-area-inset-top);
+  }
+  .glass {
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .fade-in {
+    animation: fade-in 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .rise-in {
+    animation: rise-in 0.5s cubic-bezier(0.15, 0, 0.45, 1) both;
+  }
+  .cover-shadow {
+    box-shadow: 0 1px 2px hsl(240 10% 2% / 0.18), 0 8px 24px -8px hsl(240 10% 2% / 0.35);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* thin elegant scrollbar for desktop lists */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

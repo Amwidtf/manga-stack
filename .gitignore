@@ -1,0 +1,77 @@
+# ===== 密钥与签名（绝不入库）=====
+keystore/
+*.keystore
+*.jks
+*.p12
+*.pem
+key.properties
+
+# ===== 环境变量与本地配置 =====
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.local
+local.properties
+
+# ===== 构建产物 =====
+apk/
+*.apk
+*.aab
+dist/
+dist-ssr/
+build/
+coverage/
+# Capacitor 同步进 Android 工程的 Web 产物（npm run build && npx cap sync 生成，不入库）
+android/app/src/main/assets/public/
+
+# ===== 依赖 =====
+node_modules/
+
+# ===== 日志 =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Android / Gradle =====
+.gradle/
+**/android/build/
+**/android/app/build/
+**/android/app/release/
+.cxx/
+.externalNativeBuild/
+.kotlin/
+*.iml
+*.hprof
+
+# ===== 缓存 =====
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# ===== 编辑器 =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ===== 本地私有工作区（设计稿、评审记录等，不入库不发布）=====
+.local/
+.zcode/
