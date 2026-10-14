@@ -4,11 +4,19 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.0.1-alpha.1] - 2026-10-14 (versionCode 12)
+
 ### Fixed
+
 
 - On Android 15 (targetSdk 35) edge-to-edge enforcement the page top sat under the status bar — the native side now injects real system-bar insets as CSS variables (`--safe-top` etc.) and every safe area uses `max(env(...), var(...))`; the mobile top bar and reader toolbars switched to min-height so insets padding no longer squeezes them; the reader's full-screen container also carries the insets, so manga pages start below the status bar
 - The soft keyboard no longer covers bottom content (including the hidden console input row) — viewport meta gains `interactive-widget=resizes-content`
 - Bottom sheets clear the gesture bar, top toasts clear the status bar, and the long factory-reset button label in Settings wraps instead of overflowing
+
+### Changed
+
+- Reader (paged mode): removed the floating page indicator shown during immersive reading — it covered the art, and page info is available from the bottom toolbar
+- End-of-chapter "next chapter" now appears on demand: reaching the last page stays quiet so the page is fully visible; flipping forward again (tap or swipe) brings up the chapter-end prompt with a next-chapter button, dismissed by any tap
 
 ## [0.0.1-alpha] - 2026-10-13 (versionCode 11)
 
