@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.0.1-alpha.3] - 2026-10-15 (versionCode 14)
+
+### 修复
+
+- 已知问题修复：软键盘弹出时底部弹层在部分机型上仍被输入法遮挡——布局视口不随键盘收缩的 WebView 上，弹层改为跟随可视视口定位，自动抬到键盘上方
+
 ## [0.0.1-alpha.2] - 2026-10-14 (versionCode 13)
 
 ### 修复
@@ -16,7 +22,7 @@
 
 
 - Android 15（targetSdk 35）强制 edge-to-edge 后，页面顶部被状态栏遮挡——原生侧把系统栏真实 insets 注入为 CSS 变量（`--safe-top` 等），Web 侧安全区一律取 `max(env(...), var(...))`；移动端顶部标题栏与阅读器工具栏改为 min-height，不再被安全区内边距挤压；阅读器全屏容器同样带安全区内边距，漫画画面从状态栏下方开始
-- 软键盘弹出时不再遮挡底部内容（含隐藏控制台的输入行）——viewport 增加 `interactive-widget=resizes-content`
+- 软键盘弹出时不再遮挡底部内容——viewport 增加 `interactive-widget=resizes-content`
 - 底部抽屉（Sheet）避开手势条；顶部通知避开状态栏；设置页「清除全部应用数据」按钮长文字允许换行不再溢出
 
 ### 变更
