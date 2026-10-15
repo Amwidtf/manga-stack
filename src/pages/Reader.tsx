@@ -258,14 +258,8 @@ export default function ReaderPage() {
 
   const zoomProps = {
     onTap: handleTap,
-    // 翻页模式：左右各 30% 的翻页热区不参与双击缩放——那里的快速点按
-    // 零延迟直接翻页，也绝不会误触发缩放；仅中间 40%（UI 开关区）保留
-    // 双击缩放。条漫模式全区域允许双击缩放。
-    doubleTapEnabled: (x: number) => {
-      if (mode !== 'paged') return true
-      const w = window.innerWidth
-      return x >= w * 0.3 && x <= w * 0.7
-    },
+    // 双击缩放已移除（判定延迟拖慢点按手感），缩放只保留双指捏合；
+    // 点按在全部区域立即结算——翻页热区、UI 开关区均零延迟
     onZoomChange: (z: boolean) => {
       zoomedRef.current = z
     },

@@ -9,7 +9,6 @@ interface Transform {
 
 const IDENTITY: Transform = { scale: 1, x: 0, y: 0 }
 const MIN_SCALE = 1
-const DOUBLE_TAP_MS = 320
 
 interface Gesture {
   kind: 'pan' | 'pinch'
@@ -26,9 +25,9 @@ interface Gesture {
  * so manga pages zoom here instead):
  * - two-finger pinch zooms around the midpoint
  * - one-finger drag pans while zoomed
- * - double-tap toggles 1x <-> doubleTapScale at the tap point
- * - single taps are reported via onTap after a short delay, so the first half
- *   of a double-tap never triggers page turns
+ * - single taps are reported via onTap immediately (double-tap zoom was
+ *   removed: the disambiguation delay made taps feel sluggish on phones;
+ *   zoom is pinch-only now)
  * - pans/pinches never leak clicks into nested links/buttons
  */
 export function Zoomable({
@@ -39,8 +38,6 @@ export function Zoomable({
   onTap,
   onZoomChange,
   onPinchChange,
-  doubleTapEnabled,
-  doubleTapScale = 2.4,
   maxScale = 5,
 }: {
   children: React.ReactNode
@@ -48,15 +45,10 @@ export function Zoomable({
   innerClassName?: string
   /** change to snap back to 1x (e.g. page index / chapter key) */
   resetKey?: string | number
-  /** genuine single tap (already distinguished from double-tap), clientX for zone math */
+  /** genuine single tap (fires immediately), clientX for zone math */
   onTap?: (clientX: number) => void
   onZoomChange?: (zoomed: boolean) => void
   onPinchChange?: (pinching: boolean) => void
-  /** 该 clientX 处的点按是否允许参与双击缩放。为 false 时点按立即触发
-      （无双击判定延迟）且永不缩放——翻页阅读借此让两侧翻页热区的快速
-      点按零延迟翻页，也绝不会误触发缩放 */
-  doubleTapEnabled?: (clientX: number) => boolean
-  doubleTapScale?: number
   maxScale?: number
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -67,16 +59,13 @@ export function Zoomable({
   const gestureRef = useRef<Gesture | null>(null)
   const zoomedRef = useRef(false)
   const suppressClickRef = useRef(false)
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tapPosRef = useRef<{ x: number; y: number } | null>(null) // 待结算的第一次点按位置
-  const tapClientXRef = useRef(0) // 待结算的第一次点按 clientX（立即结算用）
   const lastTouchEndRef = useRef(0)
   // callbacks live in a ref: unstable inline props must never force
   // setT/effect identity changes (that would reset the zoom on every
   // parent re-render). Refs may only be written in effects (react-hooks/refs).
-  const cbRef = useRef({ onTap, onZoomChange, onPinchChange, doubleTapEnabled })
+  const cbRef = useRef({ onTap, onZoomChange, onPinchChange })
   useEffect(() => {
-    cbRef.current = { onTap, onZoomChange, onPinchChange, doubleTapEnabled }
+    cbRef.current = { onTap, onZoomChange, onPinchChange }
   })
 
   const setT = useCallback((next: Transform) => {
@@ -95,7 +84,6 @@ export function Zoomable({
   useEffect(() => {
     setT(IDENTITY)
     gestureRef.current = null
-    if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
   }, [resetKey, setT])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -123,44 +111,10 @@ export function Zoomable({
     }
   }, [])
 
-  const zoomAt = useCallback(
-    (point: { x: number; y: number }, targetScale: number) => {
-      const cur = tRef.current
-      const s = Math.min(maxScale, Math.max(MIN_SCALE, targetScale))
-      // keep the content point under `point` stationary across the scale change
-      const cx = (point.x - cur.x) / cur.scale
-      const cy = (point.y - cur.y) / cur.scale
-      setT(clampT({ scale: s, x: point.x - cx * s, y: point.y - cy * s }))
-    },
-    [clampT, maxScale, setT]
-  )
-
-  const cancelPendingTap = () => {
-    if (tapTimerRef.current) {
-      clearTimeout(tapTimerRef.current)
-      tapTimerRef.current = null
-    }
-    tapPosRef.current = null
-  }
-
-  const scheduleTap = (clientX: number, pos: { x: number; y: number }) => {
-    cancelPendingTap()
-    tapPosRef.current = pos
-    tapClientXRef.current = clientX
-    tapTimerRef.current = setTimeout(() => {
-      tapTimerRef.current = null
-      tapPosRef.current = null
-      cbRef.current.onTap?.(clientX)
-    }, DOUBLE_TAP_MS)
-  }
-
-  /** 立即结算点按——用于不参与双击缩放的区域（翻页零延迟） */
-  const fireTapNow = (clientX: number) => {
-    cancelPendingTap()
+  /** 点按立即上报——双击缩放已移除，不再有判定延迟 */
+  const fireTap = (clientX: number) => {
     cbRef.current.onTap?.(clientX)
   }
-
-  const mayDoubleTap = (clientX: number) => cbRef.current.doubleTapEnabled?.(clientX) ?? true
 
   const localPoint = (clientX: number, clientY: number) => {
     const r = rootRef.current!.getBoundingClientRect()
@@ -172,7 +126,6 @@ export function Zoomable({
     // passed — drop any stale suppression so it can't eat a genuine tap
     suppressClickRef.current = false
     if (e.touches.length === 2) {
-      cancelPendingTap()
       const [a, b] = [e.touches[0], e.touches[1]]
       const pa = localPoint(a.clientX, a.clientY)
       const pb = localPoint(b.clientX, b.clientY)
@@ -255,53 +208,20 @@ export function Zoomable({
       gestureRef.current = null
       lastTouchEndRef.current = Date.now()
       if (!g.moved) {
-        if (!mayDoubleTap(g.lastClientX)) {
-          // 翻页热区：此处没有缩放语义，点按立即结算——零延迟翻页，
-          // 快速连点也绝不会误判成双击缩放
-          fireTapNow(g.lastClientX)
-        } else {
-          const first = tapPosRef.current
-          const near = first && Math.hypot(g.lastPos.x - first.x, g.lastPos.y - first.y) < 60
-          if (tapTimerRef.current && near) {
-            // 窗口期内的第二次点按且落点接近第一次 → 双击缩放，吞掉点按
-            cancelPendingTap()
-            suppressClickRef.current = true
-            zoomAt(g.lastPos, tRef.current.scale > 1.02 ? 1 : doubleTapScale)
-          } else {
-            // 落点相距超过阈值的第二次点按不算双击：先把挂起的第一次点按
-            // 立即结算（翻页手感零延迟），再为本次点按重新武装计时器
-            if (tapTimerRef.current) {
-              const cb = cbRef.current.onTap
-              const x = tapClientXRef.current
-              cancelPendingTap()
-              cb?.(x)
-            }
-            scheduleTap(g.lastClientX, g.lastPos)
-          }
-        }
+        fireTap(g.lastClientX)
       } else if (tRef.current.scale < 1.02) {
         setT(IDENTITY)
       }
     }
   }
 
-  // desktop: click = tap (with the same double-click disambiguation)
+  // desktop: click = tap (double-click has no zoom meaning now; its second
+  // click is swallowed by e.detail !== 1)
   const onClick = (e: React.MouseEvent) => {
     if (e.detail !== 1) return
     if (Date.now() - lastTouchEndRef.current < 500) return // synthetic click after touch
     if (suppressClickRef.current) return
-    if (!mayDoubleTap(e.clientX)) {
-      fireTapNow(e.clientX)
-      return
-    }
-    scheduleTap(e.clientX, localPoint(e.clientX, e.clientY))
-  }
-  const onDoubleClick = (e: React.MouseEvent) => {
-    if (Date.now() - lastTouchEndRef.current < 500) return
-    if (!mayDoubleTap(e.clientX)) return
-    // the click halves of this double-click already ran; nothing left to suppress
-    cancelPendingTap()
-    zoomAt(localPoint(e.clientX, e.clientY), tRef.current.scale > 1.02 ? 1 : doubleTapScale)
+    fireTap(e.clientX)
   }
 
   const onClickCapture = (e: React.MouseEvent) => {
@@ -323,7 +243,6 @@ export function Zoomable({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       onClick={onClick}
-      onDoubleClick={onDoubleClick}
       onClickCapture={onClickCapture}
     >
       <div
