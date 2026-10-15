@@ -4,6 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.0.1-alpha.4] - 2026-10-15 (versionCode 15)
+
+### Fixed
+
+- Known issue fixed: bottom panels were still covered by the soft keyboard on a few devices — IME insets are now applied to the WebView natively (the view physically shrinks with the keyboard) instead of relying on the WebView's own keyboard viewport behavior
+
 ## [0.0.1-alpha.3] - 2026-10-15 (versionCode 14)
 
 ### Fixed
