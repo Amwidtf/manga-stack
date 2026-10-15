@@ -60,6 +60,14 @@ public class MainActivity extends BridgeActivity {
             rawBars[1] = bars.right;
             rawBars[2] = bars.bottom;
             rawBars[3] = bars.left;
+            // 键盘避让（借鉴 zcode-shell 的做法）：edge-to-edge 环境（Android 15 或
+            // 卓易通等兼容层）里 windowSoftInputMode=adjustResize 失效，窗口不随输入法
+            // 收缩，WebView 的 interactive-widget/visualViewport 也不可靠。这里把 IME
+            // insets 直接作为 WebView 的 bottom padding——视图物理收缩，布局视口必然
+            // 跟着缩，Web 侧底部弹层自然抬到键盘上方。普通设备上 IME insets 已被消费
+            // 为 0，此操作为空操作。
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(0, 0, 0, imeBottom);
             // 等本次遍历的布局完成后计算几何重叠
             webView.post(MainActivity.this::pushOverlaps);
             return insets;
@@ -88,10 +96,13 @@ public class MainActivity extends BridgeActivity {
         // 底部导航/阅读器出现大片悬空
         float scale = getResources().getDisplayMetrics().density;
 
+        // 底部计算用内容盒（视图高减去 IME padding），键盘弹出时 webview 被 padding
+        // 抬起，系统栏重叠不应把 IME 高度误算进去
+        int contentBottom = loc[1] + webView.getHeight() - webView.getPaddingBottom();
         safeTop = Math.round(Math.max(0, rawBars[0] - loc[1]) / scale);
         safeLeft = Math.round(Math.max(0, rawBars[3] - loc[0]) / scale);
         safeRight = Math.round(Math.max(0, rawBars[1] - (dm.widthPixels - (loc[0] + webView.getWidth()))) / scale);
-        safeBottom = Math.round(Math.max(0, rawBars[2] - (dm.heightPixels - (loc[1] + webView.getHeight()))) / scale);
+        safeBottom = Math.round(Math.max(0, rawBars[2] - (dm.heightPixels - contentBottom)) / scale);
 
         String js = String.format(
                 "window.__setSafeInsets && window.__setSafeInsets(%d,%d,%d,%d);",
