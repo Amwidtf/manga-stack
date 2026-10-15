@@ -4,6 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.0.1-alpha.6] - 2026-10-15 (versionCode 17)
+
+### Changed
+
+- Reader: double-tap zoom removed — the 320ms disambiguation window made every tap feel sluggish; all taps now fire with zero delay (page turns, toolbar toggle). Image zoom is pinch-only (pan with one finger while zoomed)
+
 ## [0.0.1-alpha.5] - 2026-10-15 (versionCode 16)
 
 ### Changed
