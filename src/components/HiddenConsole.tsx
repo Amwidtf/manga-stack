@@ -270,17 +270,17 @@ export function HiddenConsole({ open, onClose }: { open: boolean; onClose: () =>
   }
 
   return createPortal(
+    // 不再贴底：部分设备的 WebView 对键盘完全无感（布局/可视视口都不收缩、
+    // 原生 insets 也不可靠），底边锚定必被输入法盖住。改为整体上移的居中布局，
+    // 面板落在键盘上方的安全区；输入行在面板底部也保持在屏幕中段
     <div
-      className="fixed inset-x-0 top-0 z-[110] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-x-0 top-0 z-[110] flex items-center justify-center bg-black/70 px-4 pb-[35vh] backdrop-blur-sm sm:p-6 sm:pb-6"
       style={vvBox ? { height: `${vvBox.h}px`, transform: `translateY(${vvBox.top}px)` } : undefined}
       onClick={onClose}
     >
       <div
-        className="flex max-h-[78vh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-emerald-500/30 bg-[#0a0f0a] shadow-2xl shadow-emerald-500/10 sm:rounded-2xl"
-        style={{
-          marginBottom: 'max(env(safe-area-inset-bottom), var(--safe-bottom, 0px))',
-          maxHeight: vvBox ? `${Math.round(vvBox.h * 0.78)}px` : undefined,
-        }}
+        className="flex max-h-[46vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-emerald-500/30 bg-[#0a0f0a] shadow-2xl shadow-emerald-500/10"
+        style={{ maxHeight: vvBox ? `${Math.round(vvBox.h * 0.46)}px` : undefined }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-emerald-500/20 px-4 py-3">
