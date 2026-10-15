@@ -4,6 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.0.1-alpha.5] - 2026-10-15 (versionCode 16)
+
+### Changed
+
+- Known-issue handling: as a fallback for soft-keyboard environments, bottom panels are no longer anchored to the screen bottom — they now sit centered in the safe area above the keyboard, keeping the input row in the middle of the screen so it stays visible even on devices with broken keyboard viewport behavior
+
 ## [0.0.1-alpha.4] - 2026-10-15 (versionCode 15)
 
 ### Fixed
