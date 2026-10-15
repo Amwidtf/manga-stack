@@ -41,6 +41,24 @@ export function HiddenConsole({ open, onClose }: { open: boolean; onClose: () =>
   const [pendingRm, setPendingRm] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // 键盘避让：部分 Android WebView（兼容层）不支持 interactive-widget=resizes-content，
+  // 布局视口不随软键盘收缩，底部弹层会被输入法盖住。这里把遮罩钉在 visualViewport
+  // （可视视口）上，面板随之抬到键盘上方；支持 resizes-content 的环境两视口一致，
+  // 数值自然归零，不会二次抬高
+  const [vvBox, setVvBox] = useState<{ h: number; top: number } | null>(() =>
+    window.visualViewport ? { h: window.visualViewport.height, top: window.visualViewport.offsetTop } : null
+  )
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const sync = () => setVvBox({ h: vv.height, top: vv.offsetTop })
+    vv.addEventListener('resize', sync)
+    vv.addEventListener('scroll', sync)
+    return () => {
+      vv.removeEventListener('resize', sync)
+      vv.removeEventListener('scroll', sync)
+    }
+  }, [])
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -253,12 +271,16 @@ export function HiddenConsole({ open, onClose }: { open: boolean; onClose: () =>
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-x-0 top-0 z-[110] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
+      style={vvBox ? { height: `${vvBox.h}px`, transform: `translateY(${vvBox.top}px)` } : undefined}
       onClick={onClose}
     >
       <div
         className="flex max-h-[78vh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-emerald-500/30 bg-[#0a0f0a] shadow-2xl shadow-emerald-500/10 sm:rounded-2xl"
-        style={{ marginBottom: 'max(env(safe-area-inset-bottom), var(--safe-bottom, 0px))' }}
+        style={{
+          marginBottom: 'max(env(safe-area-inset-bottom), var(--safe-bottom, 0px))',
+          maxHeight: vvBox ? `${Math.round(vvBox.h * 0.78)}px` : undefined,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-emerald-500/20 px-4 py-3">
